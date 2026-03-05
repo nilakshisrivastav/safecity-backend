@@ -2,3 +2,5 @@ fastapi
 uvicorn
 ultralytics
 python-multipart
+torch
+opencv-python-headless

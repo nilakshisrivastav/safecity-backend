@@ -6,44 +6,70 @@ import os
 
 app = FastAPI()
 
+# 🔥 CORS (React frontend connect karne ke liye)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],  # later production me restrict karna
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-model = YOLO("smartcity_best.pt")
+# ✅ Load YOLO model
+model = YOLO("model/best.pt")
+
+# Classes (same order jo training me tha)
+CLASS_NAMES = [
+    "Red Light Violation",
+    "Fight",
+    "Fire/Smoke",
+    "Crowd",
+    "Suspicious"
+]
+
 
 @app.get("/")
 def home():
-    return {"message": "SafeCity AI Backend Running"}
+    return {"message": "SafeCity AI Backend Running 🚀"}
 
-@app.post("/detect")
-async def detect(file: UploadFile = File(...)):
-    
-    temp_file = f"temp_{file.filename}"
-    
-    with open(temp_file, "wb") as buffer:
+
+@app.post("/predict")
+async def predict(file: UploadFile = File(...)):
+
+    # Temporary file save
+    file_location = f"temp_{file.filename}"
+
+    with open(file_location, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-    results = model(temp_file)
+    # Run YOLO prediction
+    results = model(file_location)
 
     detections = []
+    highest_conf = 0
+    final_label = "No Detection"
 
     for r in results:
-        boxes = r.boxes
-        for box in boxes:
-            cls = int(box.cls[0])
-            conf = float(box.conf[0])
-            label = model.names[cls]
+        for box in r.boxes:
+            class_id = int(box.cls[0])
+            confidence = float(box.conf[0])
+
+            label = CLASS_NAMES[class_id]
 
             detections.append({
-                "incident": label,
-                "confidence": round(conf * 100, 2)
+                "label": label,
+                "confidence": round(confidence * 100, 2)
             })
 
-    os.remove(temp_file)
+            if confidence > highest_conf:
+                highest_conf = confidence
+                final_label = label
 
-    return {"detections": detections}
+    os.remove(file_location)
+
+    return {
+        "status": "success",
+        "top_prediction": final_label,
+        "confidence": round(highest_conf * 100, 2),
+        "all_detections": detections
+    }
