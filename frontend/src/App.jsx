@@ -17,6 +17,7 @@ export default function App() {
   const [globalStats, setGlobalStats] = useState({ total: 0 });
   const [mapIncidents, setMapIncidents] = useState([]);
   const [activePopup, setActivePopup] = useState(null);
+  const [apiError, setApiError] = useState(null);
 
   const audioRef = useRef(new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg'));
 
@@ -70,6 +71,7 @@ export default function App() {
     setUploadedImage(file);
     setIsAnalyzing(true);
     setPredictionResult(null);
+    setApiError(null);
 
     const formData = new FormData();
     formData.append('file', file);
@@ -87,16 +89,12 @@ export default function App() {
 
     } catch (error) {
       console.error("Error connecting to backend API:", error);
-      const mockResult = {
-        top_prediction: "Suspicious",
-        confidence: 88.5,
-        all_predictions: [
-          { label: "Suspicious", confidence: 88.5 },
-          { label: "Crowd", confidence: 65.2 }
-        ]
-      };
-      setPredictionResult(mockResult);
-      triggerAdvancedAlerts(mockResult);
+      setApiError(
+        error.response
+          ? `Backend error ${error.response.status}: ${error.response.statusText}`
+          : "Cannot reach SafeCity backend. The server may be starting up (cold start ~30s) or offline. Please try again."
+      );
+      setPredictionResult(null);
     } finally {
       setIsAnalyzing(false);
     }
@@ -121,10 +119,12 @@ export default function App() {
 
       const result = response.data;
       setPredictionResult(result);
+      setApiError(null);
       triggerAdvancedAlerts(result);
 
     } catch (error) {
       console.error("Frame analysis error:", error);
+      // Don't block camera stream on error – just log it silently
     }
   };
 
@@ -189,6 +189,8 @@ export default function App() {
                 alertHistory={alertHistory}
                 isCameraActive={isCameraActive}
                 onCameraToggle={toggleCamera}
+                apiError={apiError}
+                onDismissError={() => setApiError(null)}
               />
             </div>
 

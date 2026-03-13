@@ -18,6 +18,9 @@ app.add_middleware(
 # Load YOLO model
 model = YOLO("model/best.pt")
 
+# ⚡ Speed optimization
+model.fuse()
+
 # Class names
 CLASS_NAMES = [
     "Red Light Violation",
@@ -42,8 +45,8 @@ async def predict(file: UploadFile = File(...)):
     with open(file_location, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-    # Run prediction
-    results = model(file_location)
+    # ⚡ Faster prediction
+    results = model(file_location, imgsz=256, conf=0.4)
 
     detections = []
     boxes_list = []
@@ -54,10 +57,12 @@ async def predict(file: UploadFile = File(...)):
     class_counts = {name: 0 for name in CLASS_NAMES}
 
     for r in results:
+
         if r.boxes is None:
             continue
 
         for box in r.boxes:
+
             class_id = int(box.cls[0])
             confidence = float(box.conf[0])
 

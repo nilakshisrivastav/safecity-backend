@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
-import { Upload, Camera, AlertTriangle } from 'lucide-react';
+import { Upload, Camera, AlertTriangle, XCircle } from 'lucide-react';
 
-export default function LeftPanel({ onImageUpload, isAnalyzing, predictionResult, alertHistory, isCameraActive, onCameraToggle }) {
+export default function LeftPanel({ onImageUpload, isAnalyzing, predictionResult, alertHistory, isCameraActive, onCameraToggle, apiError, onDismissError }) {
   const fileInputRef = useRef(null);
 
   const handleFileChange = (e) => {
@@ -60,6 +60,20 @@ export default function LeftPanel({ onImageUpload, isAnalyzing, predictionResult
           {isCameraActive ? "Stop Camera" : "Launch Camera"}
         </button>
       </div>
+
+      {/* API Error Banner */}
+      {apiError && (
+        <div className="bg-red-900/40 border border-red-500/60 rounded-lg px-4 py-3 flex items-start gap-3">
+          <XCircle size={18} className="text-red-400 mt-0.5 flex-shrink-0" />
+          <div className="flex-1">
+            <p className="text-red-300 text-xs font-semibold uppercase tracking-wider mb-0.5">Backend Connection Error</p>
+            <p className="text-red-200 text-xs leading-snug">{apiError}</p>
+          </div>
+          <button onClick={onDismissError} className="text-red-400 hover:text-red-200 transition-colors flex-shrink-0" aria-label="Dismiss error">
+            <XCircle size={16} />
+          </button>
+        </div>
+      )}
 
       {/* Risk Meter */}
       <div className="bg-gray-900 rounded-lg p-5 border border-gray-700 mt-2">

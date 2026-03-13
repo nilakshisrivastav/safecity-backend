@@ -27,8 +27,8 @@ ChartJS.register(
 
 export default function CenterPanel({ predictionResult }) {
   // Chart Data State
-  const [barStats, setBarStats] = useState([12, 19, 3, 5, 2]); // Initial mock data
-  const [lineStats, setLineStats] = useState([10, 15, 8, 20, 12, 25, 18]); // Initial mock data
+  const [barStats, setBarStats] = useState([0, 0, 0, 0, 0]); // Starts empty – populated from real API data
+  const [lineStats, setLineStats] = useState([0, 0, 0, 0, 0, 0, 0]); // Starts empty – populated from real API data
 
   useEffect(() => {
     if (!predictionResult || predictionResult.top_prediction === "No Detection" || !predictionResult.all_predictions) {
